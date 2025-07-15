@@ -3,21 +3,24 @@ import { getProducts, updateProductAvailability } from "../services/ProductServi
 import ProductDetails from "../components/ProductDetails";
 import type { Product } from "../types";
 
-
 export async function loader() {
-  const products = await getProducts()
-  return products
+  try {
+    const products = await getProducts()
+    return products || []
+  } catch (error) {
+    console.error('Error loading products:', error)
+    return []
+  }
 }
 
-export async function action({request}: ActionFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   const data = Object.fromEntries(await request.formData())
   await updateProductAvailability(+data.id)
   return {}
 }
+
 export default function Products() {
-
   const products = useLoaderData() as Product[]
-
 
   return (
     <>
@@ -42,12 +45,21 @@ export default function Products() {
             </tr>
           </thead>
           <tbody>
-            {products.map(product => (
-              <ProductDetails
-                key={product.id}
-                product={product}
-              />
-            ))}
+
+            {products && products.length > 0 ? (
+              products.map(product => (
+                <ProductDetails
+                  key={product.id}
+                  product={product}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="text-center p-4 text-gray-500">
+                  {products?.length === 0 ? 'No hay productos disponibles' : 'Cargando productos...'}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
